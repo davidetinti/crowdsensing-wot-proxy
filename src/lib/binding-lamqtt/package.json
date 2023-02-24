@@ -1,0 +1,30 @@
+{
+  "name": "binding-lamqtt",
+  "version": "1.0.0",
+  "description": "LAMQTT binding for node-wot",
+  "license": "EPL-2.0 OR W3C-20150513",
+  "files": [
+    "dist/"
+  ],
+  "main": "dist/lamqtt.js",
+  "types": "dist/lamqtt.d.ts",
+  "devDependencies": {
+    "@types/debug": "^4.1.7",
+    "@types/node": "16.4.13",
+    "@types/ws": "^8.5.3",
+    "ts-node": "10.1.0",
+    "typescript": "4.4.3",
+    "wot-typescript-definitions": "0.8.0-SNAPSHOT.23"
+  },
+  "dependencies": {
+    "@node-wot/core": "0.8.4",
+    "@node-wot/td-tools": "0.8.4",
+    "la-mqtt": "^1.0.1",
+    "mqtt": "^4.2.8",
+    "rxjs": "5.5.11",
+    "wot-thing-description-types": "^1.1.0-10-August-2022"
+  },
+  "scripts": {
+    "build": "tsc -b"
+  }
+}
