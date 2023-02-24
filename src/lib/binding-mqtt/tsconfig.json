@@ -2,7 +2,7 @@
   "compilerOptions": {
     "target": "es6",
     "lib": ["dom"],
-    "skipLibCheck": false,
+    "skipLibCheck": true,
     "module": "commonjs",
     "outDir": "dist",
     "rootDir": "src",
@@ -27,5 +27,6 @@
     "skipDefaultLibCheck": false,
     "allowJs": false
   },
-  "include": ["src/**/*"]
+  "include": ["src/**/*"],
+  "exclude": ["node_modules"]
 }

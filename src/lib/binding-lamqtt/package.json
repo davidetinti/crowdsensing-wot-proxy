@@ -2,7 +2,6 @@
   "name": "binding-lamqtt",
   "version": "1.0.0",
   "description": "LAMQTT binding for node-wot",
-  "license": "EPL-2.0 OR W3C-20150513",
   "files": [
     "dist/"
   ],
