@@ -127,7 +127,8 @@ export declare type Submission = {
 export declare type User = {
   _id: ObjectId;
   email: String;
-  password: String;
+  salt: String;
+  hash: String;
   points: Number;
   completed_campaigns: Array<ObjectId>;
 };

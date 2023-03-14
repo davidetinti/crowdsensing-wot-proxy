@@ -20,6 +20,7 @@ import {
   ThingDescription,
 } from "wot-typescript-definitions";
 import fetch from "node-fetch";
+import * as crypto from "crypto";
 import { LAMqttBrokerServer } from "./lib/binding-lamqtt/src/lamqtt";
 
 // Allow use of .env files
@@ -139,12 +140,18 @@ async function registerNewUserHandler(
     let existingUser = await users.findOne({ email: data.email });
     if (existingUser) throw "User already registered";
     else {
-      let result = await users.insertOne({
+      let newUser = {
         email: data.email,
-        password: data.password,
         points: 0,
         completed_campaigns: [],
-      });
+        salt: "",
+        hash: "",
+      };
+      newUser.salt = crypto.randomBytes(16).toString("hex");
+      newUser.hash = crypto
+        .pbkdf2Sync(data.password, newUser.salt, 1000, 64, `sha512`)
+        .toString(`hex`);
+      let result = await users.insertOne(newUser);
       if (result.acknowledged) {
         return {
           authenticated: true,
@@ -174,14 +181,18 @@ async function loginUserHandler(
     let users = db.collection("users");
     let user = await users.findOne({
       email: data.email,
-      password: data.password,
     });
     if (user) {
-      return {
-        authenticated: true,
-        bearer: String(user._id),
-      };
-    } else throw "Incorrect email or password.";
+      let hash = crypto
+        .pbkdf2Sync(data.password, user.salt, 1000, 64, `sha512`)
+        .toString(`hex`);
+      if (user.hash != hash) throw "Incorrect password";
+      else
+        return {
+          authenticated: true,
+          bearer: String(user._id),
+        };
+    } else throw "Incorrect email";
   } catch (error) {
     console.log(error);
     return {
