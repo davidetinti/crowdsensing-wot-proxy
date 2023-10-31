@@ -18,7 +18,7 @@
     "@node-wot/core": "0.8.4",
     "@types/node-fetch": "^2.6.2",
     "dotenv": "^16.0.3",
-    "mongodb": "^5.0.1",
+    "mongodb": "^5.8.0",
     "node-fetch": "^2.6.9",
     "nodemon": "^2.0.20",
     "ts-node": "^10.9.1",
