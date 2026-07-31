@@ -10,6 +10,7 @@ import {
   TimerInterval,
   TimerTimeout,
   User,
+  validateAgainstSchema,
 } from "./utils";
 import Servient from "@node-wot/core";
 import { Db } from "mongodb";
@@ -277,13 +278,19 @@ function startPullRoutine(
             campaign._id.toString()
           );
           let data = await reading.value();
-          switch (campaign.type) {
-            // check that data includes required fields, i.e. data are valid
-            case "location":
-              break;
-
-            default:
-              break;
+          // Validate pulled data against the campaign schema, when defined.
+          let validationError = validateAgainstSchema(
+            data,
+            campaign.data_schema
+          );
+          if (validationError != null) {
+            console.log(
+              "Discarding pulled data for campaign " +
+                campaign._id +
+                ": " +
+                validationError
+            );
+            return;
           }
           // Save sent data
           let insertResult = await db.collection("submissions").insertOne({
@@ -394,6 +401,9 @@ async function sendPushCampaignDataHandler(
     // Check if user joined the campaign
     if (!deviceMap.subscriptions.has(campaign._id.toString()))
       throw "User not applied to this campaign";
+    // Validate submitted data against the campaign schema, when defined.
+    let validationError = validateAgainstSchema(data.data, campaign.data_schema);
+    if (validationError != null) throw validationError;
     // Save sent data
     let insertResult = await db.collection("submissions").insertOne({
       bearer: user._id,

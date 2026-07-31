@@ -145,7 +145,98 @@ export declare type Campaign = {
   push_input_enabled: Boolean;
   submission_required: Number;
   type: String;
+  // Optional data schema (subset of JSON Schema / WoT DataSchema) describing
+  // the payload devices must submit for this campaign. When present, the
+  // proxy validates every submission (push and pull) against it. This is
+  // what makes campaign types extensible: a new data type is defined by
+  // inserting a campaign with its own schema, no code changes needed.
+  data_schema?: DataSchema;
 };
+
+export declare type DataSchema = {
+  type?: String;
+  properties?: { [k: string]: DataSchemaProperty };
+  required?: Array<String>;
+};
+
+export declare type DataSchemaProperty = {
+  type?: String;
+  title?: String;
+  description?: String;
+  unit?: String;
+  minimum?: Number;
+  maximum?: Number;
+  enum?: Array<any>;
+};
+
+/**
+ * Validate a submission payload against a campaign data schema.
+ * Supports the subset of JSON Schema used by campaign definitions:
+ * object type, per-property primitive types (number/integer/string/boolean),
+ * required fields, minimum/maximum and enum constraints.
+ * Returns null when the payload is valid, or a human readable error.
+ */
+export function validateAgainstSchema(
+  data: any,
+  schema: DataSchema | undefined
+): string | null {
+  if (!schema) return null;
+  if ((schema.type ?? "object") === "object") {
+    if (typeof data !== "object" || data === null || Array.isArray(data))
+      return "Payload must be an object";
+    const properties = schema.properties ?? {};
+    for (const name of schema.required ?? []) {
+      if (data[String(name)] === undefined || data[String(name)] === null)
+        return "Missing required field '" + name + "'";
+    }
+    for (const name in properties) {
+      const value = data[name];
+      if (value === undefined || value === null) continue;
+      const error = validateValue(value, properties[name], name);
+      if (error) return error;
+    }
+  }
+  return null;
+}
+
+function validateValue(
+  value: any,
+  property: DataSchemaProperty,
+  name: string
+): string | null {
+  switch (property.type) {
+    case "number":
+    case "integer":
+      if (typeof value !== "number")
+        return "Field '" + name + "' must be a number";
+      if (property.type === "integer" && !Number.isInteger(value))
+        return "Field '" + name + "' must be an integer";
+      if (
+        property.minimum !== undefined &&
+        value < property.minimum.valueOf()
+      )
+        return "Field '" + name + "' is below minimum " + property.minimum;
+      if (
+        property.maximum !== undefined &&
+        value > property.maximum.valueOf()
+      )
+        return "Field '" + name + "' is above maximum " + property.maximum;
+      break;
+    case "string":
+      if (typeof value !== "string")
+        return "Field '" + name + "' must be a string";
+      break;
+    case "boolean":
+      if (typeof value !== "boolean")
+        return "Field '" + name + "' must be a boolean";
+      break;
+    default:
+      break;
+  }
+  if (property.enum && !property.enum.some((allowed) => allowed === value))
+    return "Field '" + name + "' must be one of " + JSON.stringify(property.enum);
+  return null;
+}
 
 export const dashboardThingDescription: ExposedThingInit = {
   id: "crwsns:dashboard",
