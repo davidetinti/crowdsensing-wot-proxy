@@ -19,9 +19,11 @@ schema.
   registro dei sensori (`SensorRegistry`): se il `type` della campagna
   corrisponde a un sensore del dispositivo, i dati vengono prodotti da
   quello.
-- **App Android**: non interpreta ancora `data_schema`; le campagne con
-  schema restano visibili ma l'invio manuale (che invia un payload di
-  posizione) viene rifiutato dal proxy se non conforme.
+- **App Android**: stesso comportamento dell'app iOS — form dinamico
+  generato dal `data_schema` per l'invio manuale e `SensorRegistry`
+  (posizione, batteria, barometro, accelerometro) per le modalità
+  automatiche; le modalità proposte sono filtrate in base ai sensori
+  presenti sul dispositivo.
 
 ## Schema supportato
 
@@ -79,20 +81,23 @@ db.campaigns.insertOne({
 });
 ```
 
-## Sensori disponibili sui device iOS
+## Sensori disponibili sui device
 
 Per le modalità automatiche (pull e push automatico) il `type` della
-campagna viene risolto dal registro dei sensori dell'app iOS:
+campagna viene risolto dal registro dei sensori delle app (iOS e Android),
+con payload identici tra le due piattaforme:
 
 | `type` | Sensore | Payload prodotto |
 |---|---|---|
-| `location`, `gps` | CoreLocation | `{latitude, longitude, accuracy, ...}` |
-| `battery` | UIDevice | `{level, state}` |
-| `pressure` | Barometro (CMAltimeter) | `{pressure}` (kPa) |
-| `motion` | Accelerometro (CoreMotion) | `{x, y, z}` (g) |
+| `location`, `gps` | CoreLocation / FusedLocationProvider | `{latitude, longitude, accuracy, ...}` |
+| `battery` | UIDevice / BatteryManager | `{level, state}` |
+| `pressure` | Barometro | `{pressure}` (kPa) |
+| `motion` | Accelerometro | `{x, y, z}` (g) |
 
 I tipi senza sensore corrispondente restano utilizzabili in modalità
 manuale tramite `data_schema`. Per aggiungere un nuovo sensore lato app è
-sufficiente implementare il protocollo `DeviceSensor` e registrarlo nel
-`SensorRegistry` (vedi `ios/CrowdsensingWoT/Services/SensorRegistry.swift`
-nel repository dell'app).
+sufficiente implementare il protocollo/interfaccia `DeviceSensor` e
+registrarlo nel `SensorRegistry`:
+`ios/CrowdsensingWoT/Services/SensorRegistry.swift` (iOS) e
+`app/src/main/java/com/example/crowdsensingwotandroidapp/utils/sensors/`
+(Android) nel repository dell'app.
