@@ -181,20 +181,21 @@ export function validateAgainstSchema(
   schema: DataSchema | undefined
 ): string | null {
   if (!schema) return null;
-  if ((schema.type ?? "object") === "object") {
-    if (typeof data !== "object" || data === null || Array.isArray(data))
-      return "Payload must be an object";
-    const properties = schema.properties ?? {};
-    for (const name of schema.required ?? []) {
-      if (data[String(name)] === undefined || data[String(name)] === null)
-        return "Missing required field '" + name + "'";
-    }
-    for (const name in properties) {
-      const value = data[name];
-      if (value === undefined || value === null) continue;
-      const error = validateValue(value, properties[name], name);
-      if (error) return error;
-    }
+  if ((schema.type ?? "object") !== "object")
+    // Fail closed on misconfigured schemas instead of accepting anything.
+    return "Unsupported schema type '" + schema.type + "'";
+  if (typeof data !== "object" || data === null || Array.isArray(data))
+    return "Payload must be an object";
+  const properties = schema.properties ?? {};
+  for (const name of schema.required ?? []) {
+    if (data[String(name)] === undefined || data[String(name)] === null)
+      return "Missing required field '" + name + "'";
+  }
+  for (const name in properties) {
+    const value = data[name];
+    if (value === undefined || value === null) continue;
+    const error = validateValue(value, properties[name], name);
+    if (error) return error;
   }
   return null;
 }
